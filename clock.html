@@ -8,12 +8,22 @@
 </head>
 
 <body>
-    <div class="clock">
-        <div class="ring hours" id="hours-ring"></div>
-        <div class="ring minutes" id="minutes-ring"></div>
-        <div class="ring seconds" id="seconds-ring"></div>
-        <div class="pointer" aria-hidden="true"></div>
-        <div class="center-dot" aria-hidden="true"></div>
+    <div class="layout">
+        <div class="clock">
+            <div class="ring hours" id="hours-ring"></div>
+            <div class="ring minutes" id="minutes-ring"></div>
+            <div class="ring seconds" id="seconds-ring"></div>
+            <div class="pointer" aria-hidden="true"></div>
+            <div class="center-dot" aria-hidden="true"></div>
+        </div>
+
+        <aside class="settings-panel" aria-label="Clock settings">
+            <h2 class="settings-title">Settings</h2>
+            <label class="toggle" for="seconds-toggle">
+                <input type="checkbox" id="seconds-toggle" checked>
+                Show seconds
+            </label>
+        </aside>
     </div>
 
     <script src="script.js"></script>
