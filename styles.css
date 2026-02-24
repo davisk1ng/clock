@@ -100,6 +100,10 @@ body {
 	transform-origin: center;
 }
 
+.clock.motion-enabled .ring {
+	transition: transform 0.72s linear;
+}
+
 .tick {
 	position: absolute;
 	left: 50%;
@@ -107,6 +111,10 @@ body {
 	transform-origin: center;
 	color: #e8e8e8;
 	font-variant-numeric: tabular-nums;
+}
+
+.clock.motion-enabled .tick {
+	transition: transform 0.72s linear;
 }
 
 .hours .tick {

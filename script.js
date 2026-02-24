@@ -24,6 +24,15 @@ const NETWORK_RESYNC_INTERVAL_MS = 10 * 60 * 1000;
 
 let clockBaseTimeMs = null;
 let basePerformanceNowMs = 0;
+let previousSecond = null;
+let previousMinute = null;
+let previousHour = null;
+let secondCycles = 0;
+let minuteCycles = 0;
+let hourCycles = 0;
+let firstRenderComplete = false;
+let clockTickTimeoutId = null;
+let clockTickIntervalId = null;
 
 function pad(value) {
 	return String(value).padStart(2, '0');
@@ -80,6 +89,30 @@ function rotateRingWithAlignedNumbers(ringElement, rotationDeg) {
 		const radius = Number(tick.dataset.radius || 0);
 		tick.style.transform = `translate(-50%, -50%) rotate(${angle}deg) translateY(-${radius}px) rotate(${-angle - rotationDeg}deg)`;
 	});
+}
+
+function clearClockTicker() {
+	if (clockTickTimeoutId !== null) {
+		clearTimeout(clockTickTimeoutId);
+		clockTickTimeoutId = null;
+	}
+
+	if (clockTickIntervalId !== null) {
+		clearInterval(clockTickIntervalId);
+		clockTickIntervalId = null;
+	}
+}
+
+function startClockTicker() {
+	clearClockTicker();
+
+	const now = getClockNow();
+	const delayToNextSecond = 1000 - now.getMilliseconds();
+
+	clockTickTimeoutId = setTimeout(() => {
+		updateClock();
+		clockTickIntervalId = setInterval(updateClock, 1000);
+	}, delayToNextSecond);
 }
 
 function setClockBaseTime(timeMs) {
@@ -163,16 +196,41 @@ async function syncClockWithNetwork() {
 
 function updateClock() {
 	const now = getClockNow();
-	const seconds = now.getSeconds();
-	const minutes = now.getMinutes();
-	const hours = now.getHours() % 12;
+	const rawSeconds = now.getSeconds();
+	const rawMinutes = now.getMinutes();
+	const rawHours = now.getHours() % 12;
 	const showSeconds = secondsToggle.checked;
 
-	rotateRingWithAlignedNumbers(hoursRing, -((hours / 12) * 360));
-	rotateRingWithAlignedNumbers(minutesRing, -((minutes / 60) * 360));
+	if (previousSecond !== null && rawSeconds < previousSecond) {
+		secondCycles += 1;
+	}
+
+	if (previousMinute !== null && rawMinutes < previousMinute) {
+		minuteCycles += 1;
+	}
+
+	if (previousHour !== null && rawHours < previousHour) {
+		hourCycles += 1;
+	}
+
+	const displaySeconds = rawSeconds + secondCycles * 60;
+	const displayMinutes = rawMinutes + minuteCycles * 60;
+	const displayHours = rawHours + hourCycles * 12;
+
+	previousSecond = rawSeconds;
+	previousMinute = rawMinutes;
+	previousHour = rawHours;
+
+	rotateRingWithAlignedNumbers(hoursRing, -(displayHours * 30));
+	rotateRingWithAlignedNumbers(minutesRing, -(displayMinutes * 6));
 
 	if (showSeconds) {
-		rotateRingWithAlignedNumbers(secondsRing, -((seconds / 60) * 360));
+		rotateRingWithAlignedNumbers(secondsRing, -(displaySeconds * 6));
+	}
+
+	if (!firstRenderComplete) {
+		clockElement.classList.add('motion-enabled');
+		firstRenderComplete = true;
 	}
 }
 
@@ -185,7 +243,7 @@ applyClockLayout(secondsToggle.checked);
 
 syncClockWithNetwork().finally(() => {
 	updateClock();
-	setInterval(updateClock, 1000);
+	startClockTicker();
 });
 
 setInterval(syncClockWithNetwork, NETWORK_RESYNC_INTERVAL_MS);
